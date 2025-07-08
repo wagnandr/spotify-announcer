@@ -9,12 +9,43 @@ import asyncio
 import edge_tts
 import subprocess
 
-SCOPE = 'user-read-playback-state user-modify-playback-state user-read-currently-playing'
+SPOTIFY_SCOPE = 'user-read-playback-state user-modify-playback-state user-read-currently-playing'
 
 # Spotify client
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
-    scope=SCOPE,
-))
+class SpotifyData:
+    def __init__(self, is_new, title, artist):
+        self.is_new = is_new 
+        self.title = title
+        self.artist = artist
+
+class Spotify:
+    def __init__(self):
+        self.client = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=SPOTIFY_SCOPE))
+        self.last_track_id = None
+    
+    def track_info(self):
+        is_new = False
+        title = None
+        artist = None
+        playback = self.client.current_playback()
+        if playback and playback['is_playing']:
+            track = playback['item']
+            if track:
+                is_new = track['id'] != self.last_track_id
+                self.last_track_id = track['id']
+                title = track['name']
+                artist = ', '.join(a['name'] for a in track['artists'])
+        return SpotifyData(is_new, title, artist)
+        
+    def current_playback(self):
+        return self.client.current_playback()
+
+    def pause(self):
+        return self.client.pause_playback()
+
+    def resume(self):
+        return self.client.start_playback()
+
 
 class TTSEngine:
     def __init__(self):
@@ -60,6 +91,7 @@ class TriviaGenerator:
             prompt_parts.append('Where in the story is it happening? What would happen before, e.g., in a ballet?')
             prompt_parts.append('Assume the user has understood the events in the ballet so far.')
         prompt_parts.append(f'The song is: {title}')
+        #f'Previous trivia were: {". ".join(self.previous_trivia)}',
         return " ".join(prompt_parts)
     
     def generate_trivia(self, title):
@@ -79,24 +111,18 @@ class TriviaGenerator:
 
 engine = ETTSEngine()
 trivia = TriviaGenerator(is_ballet=True)
+spotify = Spotify()
 
 
 def main_loop():
-    last_track_id = None
     while True:
-        playback = sp.current_playback()
-        if playback and playback['is_playing']:
-            track = playback['item']
-            if track and track['id'] != last_track_id:
-                last_track_id = track['id']
-                title = track['name']
-                artist = ', '.join(a['name'] for a in track['artists'])
-                name = f'{title} by {artist}' 
-                #process_speak_name = engine.speak(f"Now playing: {name}")
-                process_speak_name = engine.speak(title)
-                trivia_text = trivia.generate_trivia(name)
-                process_speak_name.wait()
-                engine.speak(trivia_text).wait()
+        spotify_data = spotify.track_info()
+        if spotify_data.is_new:
+            name = f'{spotify_data.title} by {spotify_data.artist}' 
+            process_speak_name = engine.speak(spotify_data.title)
+            trivia_text = trivia.generate_trivia(name)
+            process_speak_name.wait()
+            engine.speak(trivia_text).wait()
         time.sleep(5)
 
 if __name__ == '__main__':
