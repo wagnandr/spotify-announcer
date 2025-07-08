@@ -78,7 +78,7 @@ class TriviaGenerator:
 
 
 engine = ETTSEngine()
-trivia = TriviaGenerator()
+trivia = TriviaGenerator(is_ballet=True)
 
 
 def main_loop():
