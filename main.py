@@ -46,25 +46,27 @@ class ETTSEngine:
 
 
 class TriviaGenerator:
-    def __init__(self):
+    def __init__(self, is_ballet=False):
         import openai
         self.client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         self.previous_trivia = []
+        self.is_ballet = is_ballet 
 
     def generate_prompt(self, title):
-        return " ".join([
-            'Give a short description (max. 40 words) about the following song thereby embedding them into the full ballet.',
-            'Where in the story is it happening? What would happen in the ballet?',
-            'Assume the user has understood the events in the ballet so far.',
-            #'Avoid naming the play composer and orchestra but embed the title.',
-            f'The song is: {title}',
-            #f'Previous trivia were: {". ".join(self.previous_trivia)}',
-        ])
+        prompt_parts = [
+            'Give a short description (max. 40 words) about the following song thereby embedding them into the full music piece.',
+        ]
+        if self.is_ballet:
+            prompt_parts.append('Where in the story is it happening? What would happen before, e.g., in a ballet?')
+            prompt_parts.append('Assume the user has understood the events in the ballet so far.')
+        prompt_parts.append(f'The song is: {title}')
+        return " ".join(prompt_parts)
     
     def generate_trivia(self, title):
         try:
             response = self.client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                #model="gpt-3.5-turbo",
+                model="gpt-4.1",
                 messages=[{"role": "user", "content": self.generate_prompt(title)}]
             )
             trivia = response.choices[0].message.content.strip()
