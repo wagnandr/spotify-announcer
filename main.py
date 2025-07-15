@@ -81,12 +81,13 @@ class EdgeTTSEngine:
 
 
 class TriviaGenerator:
-    def __init__(self, is_ballet=False, max_words=40):
+    def __init__(self, is_ballet=False, max_words=40, use_previous_trivia=False):
         import openai
         self.client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         self.previous_trivia = []
         self.is_ballet = is_ballet 
         self.max_words = max_words
+        self.use_previous_trivia = use_previous_trivia
 
     def generate_prompt(self, title):
         prompt_parts = []
@@ -99,7 +100,9 @@ class TriviaGenerator:
             prompt_parts.append(f'Maybe add some details about the song, its creator, historical context or other trivia.')
             prompt_parts.append(f'If you do not know the song, its fine, just say nothing.')
         prompt_parts.append(f'The song is: {title}')
-        #f'Previous trivia were: {". ".join(self.previous_trivia)}',
+        if self.use_previous_trivia:
+            prompt_parts.append('If it is useful to backreference previous trivia, do so.')
+            prompt_parts.append(f'Previous trivia were: {". ".join(self.previous_trivia)}')
         return " ".join(prompt_parts)
     
     def generate_trivia(self, title):
@@ -140,6 +143,11 @@ def main():
         help='Do not play any trivia'
     )
     parser.add_argument(
+        '--use-previous-trivia',
+        action='store_true',
+        help='Include previous trivia in the prompt for generating new trivia'
+    )
+    parser.add_argument(
         '--tts',
         choices=['edge', 'pyttsx3'],
         default='edge',
@@ -151,9 +159,10 @@ def main():
     no_title = args.no_title
     no_trivia = args.no_trivia
     tts_choice = args.tts
+    use_previous_trivia = args.use_previous_trivia
 
     engine = EdgeTTSEngine() if tts_choice == 'edge' else TTSEngine()
-    trivia = TriviaGenerator(is_ballet=is_ballet, max_words=trivia_size)
+    trivia = TriviaGenerator(is_ballet=is_ballet, max_words=trivia_size, use_previous_trivia=use_previous_trivia)
     spotify = Spotify()
 
     print(f"🎶 Starting Spotify announcer with is_ballet set to {is_ballet}, trivia size set to {trivia_size} words, play title: {not no_title}, TTS engine: {tts_choice}...")
