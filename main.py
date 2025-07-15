@@ -9,7 +9,8 @@ import asyncio
 import edge_tts
 import subprocess
 from dataclasses import dataclass
-
+import argparse
+import sys
 
 SPOTIFY_SCOPE = 'user-read-playback-state user-modify-playback-state user-read-currently-playing'
 GPT_MODEL = 'gpt-4.1'  # or 'gpt-3.5-turbo' if you prefer
@@ -113,22 +114,35 @@ class TriviaGenerator:
             return ""
 
 
-engine = EdgeTTSEngine()
-trivia = TriviaGenerator(is_ballet=True)
-spotify = Spotify()
+def main():
+    parser = argparse.ArgumentParser(description="Spotify Announcer CLI")
+    parser.add_argument(
+        '--ballet', 
+        action='store_true', 
+        help='Set the is_ballet parameter to True'
+    )
+    args = parser.parse_args()
+    is_ballet = args.ballet
 
+    engine = EdgeTTSEngine()
+    trivia = TriviaGenerator(is_ballet=is_ballet)
+    spotify = Spotify()
 
-def main_loop():
-    while True:
-        spotify_data = spotify.track_info()
-        if spotify_data.is_new:
-            name = f'{spotify_data.title} by {spotify_data.artist}' 
-            process_speak_name = engine.speak(spotify_data.title)
-            trivia_text = trivia.generate_trivia(name)
-            process_speak_name.wait()
-            engine.speak(trivia_text).wait()
-        time.sleep(5)
+    print(f"🎶 Starting Spotify announcer with is_ballet set to {is_ballet}...")
+    
+    try:
+        while True:
+            spotify_data = spotify.track_info()
+            if spotify_data.is_new:
+                name = f'{spotify_data.title} by {spotify_data.artist}' 
+                process_speak_name = engine.speak(spotify_data.title)
+                trivia_text = trivia.generate_trivia(name)
+                process_speak_name.wait()
+                engine.speak(trivia_text).wait()
+            time.sleep(5)
+    except KeyboardInterrupt:
+        print("\nExiting Spotify announcer...")
+        sys.exit(0)
 
 if __name__ == '__main__':
-    print("🎶 Starting Spotify announcer...")
-    main_loop()
+    main()
