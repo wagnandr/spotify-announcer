@@ -11,6 +11,7 @@ import subprocess
 from dataclasses import dataclass
 import argparse
 import sys
+import tempfile
 
 SPOTIFY_SCOPE = 'user-read-playback-state user-modify-playback-state user-read-currently-playing'
 
@@ -64,19 +65,20 @@ class TTSEngine:
 class EdgeTTSEngine:
     def __init__(self):
         self.loop = asyncio.get_event_loop()
-        self.announcement_file_path = "announcement.mp3"
 
-    async def generate_text(self, text):
+    async def generate_text_to_file(self, text, file_path):
         communicate = edge_tts.Communicate(text=text, voice="en-US-GuyNeural")
-        await communicate.save(self.announcement_file_path)
-
-    def play_mp3_ffplay(self):
-        return subprocess.Popen(["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", self.announcement_file_path])
+        await communicate.save(file_path)
 
     def speak(self, text):
         print(f"🔊 {text}")
-        self.loop.run_until_complete(self.generate_text(text))
-        return self.play_mp3_ffplay()
+        with tempfile.NamedTemporaryFile(suffix=".mp3", delete=True) as tmp:
+            self.loop.run_until_complete(self.generate_text_to_file(text, tmp.name))
+            process = subprocess.Popen(
+                ["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", tmp.name]
+            )
+            # For compatibility with .wait() in main loop, return the process
+            process.wait()
 
 
 class TriviaGenerator:
@@ -182,13 +184,10 @@ def main():
                 if spotify_data.is_new:
                     name = f'{spotify_data.title} by {spotify_data.artist}' 
                     if not no_title:
-                        process_speak_name = engine.speak(spotify_data.title)
+                        engine.speak(spotify_data.title)
                     if not no_trivia:
                         trivia_text = trivia.generate_trivia(name)
-                    if not no_title:
-                        process_speak_name.wait()
-                    if not no_trivia:
-                        engine.speak(trivia_text).wait()
+                        engine.speak(trivia_text)
             except (ReadTimeout) as e:
                 print("Network error:", e)
             except Exception as e:
