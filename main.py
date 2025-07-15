@@ -129,15 +129,21 @@ def main():
         default=40,
         help='Maximum number of words for the trivia (default: 40)'
     )
+    parser.add_argument(
+        '--no-title',
+        action='store_true',
+        help='Do not play the title before the trivia'
+    )
     args = parser.parse_args()
     is_ballet = args.ballet
     trivia_size = args.trivia_size
+    no_title = args.no_title
 
     engine = EdgeTTSEngine()
     trivia = TriviaGenerator(is_ballet=is_ballet, max_words=trivia_size)
     spotify = Spotify()
 
-    print(f"🎶 Starting Spotify announcer with is_ballet set to {is_ballet}, trivia size set to {trivia_size} words...")
+    print(f"🎶 Starting Spotify announcer with is_ballet set to {is_ballet}, trivia size set to {trivia_size} words, play title: {not no_title}...")
     
     try:
         while True:
@@ -146,9 +152,11 @@ def main():
                 spotify_data = spotify.track_info()
                 if spotify_data.is_new:
                     name = f'{spotify_data.title} by {spotify_data.artist}' 
-                    process_speak_name = engine.speak(spotify_data.title)
+                    if not no_title:
+                        process_speak_name = engine.speak(spotify_data.title)
                     trivia_text = trivia.generate_trivia(name)
-                    process_speak_name.wait()
+                    if not no_title:
+                        process_speak_name.wait()
                     engine.speak(trivia_text).wait()
             except (ReadTimeout) as e:
                 print("Network error:", e)
