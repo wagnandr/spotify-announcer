@@ -8,22 +8,25 @@ from spotipy.oauth2 import SpotifyOAuth
 import asyncio
 import edge_tts
 import subprocess
+from dataclasses import dataclass
+
 
 SPOTIFY_SCOPE = 'user-read-playback-state user-modify-playback-state user-read-currently-playing'
+GPT_MODEL = 'gpt-4.1'  # or 'gpt-3.5-turbo' if you prefer
 
-# Spotify client
+@dataclass
 class SpotifyData:
-    def __init__(self, is_new, title, artist):
-        self.is_new = is_new 
-        self.title = title
-        self.artist = artist
+    """Data class to hold Spotify track information."""
+    is_new: bool
+    title: str
+    artist: str
 
 class Spotify:
     def __init__(self):
         self.client = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=SPOTIFY_SCOPE))
         self.last_track_id = None
     
-    def track_info(self):
+    def track_info(self) -> SpotifyData:
         is_new = False
         title = None
         artist = None
@@ -58,7 +61,7 @@ class TTSEngine:
         self.engine.runAndWait()
 
 
-class ETTSEngine:
+class EdgeTTSEngine:
     def __init__(self):
         self.loop = asyncio.get_event_loop()
         self.announcement_file_path = "announcement.mp3"
@@ -97,8 +100,7 @@ class TriviaGenerator:
     def generate_trivia(self, title):
         try:
             response = self.client.chat.completions.create(
-                #model="gpt-3.5-turbo",
-                model="gpt-4.1",
+                model=GPT_MODEL,
                 messages=[{"role": "user", "content": self.generate_prompt(title)}]
             )
             trivia = response.choices[0].message.content.strip()
@@ -109,7 +111,7 @@ class TriviaGenerator:
             return ""
 
 
-engine = ETTSEngine()
+engine = EdgeTTSEngine()
 trivia = TriviaGenerator(is_ballet=True)
 spotify = Spotify()
 
