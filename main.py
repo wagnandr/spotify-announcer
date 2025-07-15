@@ -63,9 +63,9 @@ class TTSEngine:
 
 
 class EdgeTTSEngine:
-    def __init__(self):
+    def __init__(self, volume=0.5):
         self.loop = asyncio.get_event_loop()
-        self.volume = 0.5
+        self.volume = volume
 
     async def generate_text_to_file(self, text, file_path):
         communicate = edge_tts.Communicate(text=text, voice="en-US-GuyNeural")
@@ -161,6 +161,12 @@ def main():
         default='gpt-4.1',
         help='Choose OpenAI GPT model: "gpt-4.1" (default) or "gpt-3.5-turbo"'
     )
+    parser.add_argument(
+        '--volume',
+        type=float,
+        default=0.5,
+        help='Set the TTS volume (0.0 to 1.0, default: 0.5)'
+    )
     args = parser.parse_args()
     is_ballet = args.ballet
     trivia_size = args.trivia_size
@@ -169,8 +175,9 @@ def main():
     tts_choice = args.tts
     use_previous_trivia = args.use_previous_trivia
     gpt_model = args.gpt_model
+    volume = args.volume
 
-    engine = EdgeTTSEngine() if tts_choice == 'edge' else TTSEngine()
+    engine = EdgeTTSEngine(volume=volume) if tts_choice == 'edge' else TTSEngine()
     trivia = TriviaGenerator(is_ballet=is_ballet, max_words=trivia_size, use_previous_trivia=use_previous_trivia, gpt_model=gpt_model)
     spotify = Spotify()
 
