@@ -2,7 +2,6 @@ from dotenv import load_dotenv
 load_dotenv()  # loads .env into environment
 
 import os
-import time
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import asyncio
@@ -12,6 +11,7 @@ from dataclasses import dataclass
 import argparse
 import sys
 import tempfile
+from requests.exceptions import ReadTimeout
 
 SPOTIFY_SCOPE = 'user-read-playback-state user-modify-playback-state user-read-currently-playing'
 
@@ -182,10 +182,9 @@ def main():
     spotify = Spotify()
 
     print(f"🎶 Starting Spotify announcer with is_ballet set to {is_ballet}, trivia size set to {trivia_size} words, play title: {not no_title}, TTS engine: {tts_choice}, GPT model: {gpt_model}...")
-    
-    try:
+
+    async def announcer_loop():
         while True:
-            from requests.exceptions import ReadTimeout
             try:
                 spotify_data = spotify.track_info()
                 if spotify_data.is_new:
@@ -199,7 +198,10 @@ def main():
                 print("Network error:", e)
             except Exception as e:
                 print("Unexpected error:", e)
-            time.sleep(5)
+            await asyncio.sleep(5)
+
+    try:
+        asyncio.run(announcer_loop())
     except KeyboardInterrupt:
         print("\nExiting Spotify announcer...")
         sys.exit(0)
