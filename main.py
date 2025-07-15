@@ -95,7 +95,9 @@ class TriviaGenerator:
             prompt_parts.append('Where in the story is it happening? What would happen before, e.g., in a ballet?')
             prompt_parts.append('Assume the user has understood the events in the ballet so far.')
         else:
-            prompt_parts.append(f'Give a short description (max. {self.max_words} words) about the following song thereby embedding them into the full music piece.')
+            prompt_parts.append(f'Give a short description (max. {self.max_words} words) about the following song thereby embedding them into the given genre.')
+            prompt_parts.append(f'Maybe add some details about the song, its creator, historical context or other trivia.')
+            prompt_parts.append(f'If you do not know the song, its fine, just say nothing.')
         prompt_parts.append(f'The song is: {title}')
         #f'Previous trivia were: {". ".join(self.previous_trivia)}',
         return " ".join(prompt_parts)
