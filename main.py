@@ -13,7 +13,6 @@ import argparse
 import sys
 
 SPOTIFY_SCOPE = 'user-read-playback-state user-modify-playback-state user-read-currently-playing'
-GPT_MODEL = 'gpt-4.1'  # or 'gpt-3.5-turbo' if you prefer
 
 @dataclass
 class SpotifyData:
@@ -81,13 +80,14 @@ class EdgeTTSEngine:
 
 
 class TriviaGenerator:
-    def __init__(self, is_ballet=False, max_words=40, use_previous_trivia=False):
+    def __init__(self, is_ballet=False, max_words=40, use_previous_trivia=False, gpt_model='gpt-4.1'):
         import openai
         self.client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         self.previous_trivia = []
         self.is_ballet = is_ballet 
         self.max_words = max_words
         self.use_previous_trivia = use_previous_trivia
+        self.gpt_model = gpt_model 
 
     def generate_prompt(self, title):
         prompt_parts = []
@@ -108,7 +108,7 @@ class TriviaGenerator:
     def generate_trivia(self, title):
         try:
             response = self.client.chat.completions.create(
-                model=GPT_MODEL,
+                model=self.gpt_model,
                 messages=[{"role": "user", "content": self.generate_prompt(title)}]
             )
             trivia = response.choices[0].message.content.strip()
@@ -153,6 +153,12 @@ def main():
         default='edge',
         help='Choose TTS engine: "edge" (default) or "pyttsx3"'
     )
+    parser.add_argument(
+        '--gpt-model',
+        choices=['gpt-4.1', 'gpt-3.5-turbo'],
+        default='gpt-4.1',
+        help='Choose OpenAI GPT model: "gpt-4.1" (default) or "gpt-3.5-turbo"'
+    )
     args = parser.parse_args()
     is_ballet = args.ballet
     trivia_size = args.trivia_size
@@ -160,12 +166,13 @@ def main():
     no_trivia = args.no_trivia
     tts_choice = args.tts
     use_previous_trivia = args.use_previous_trivia
+    gpt_model = args.gpt_model
 
     engine = EdgeTTSEngine() if tts_choice == 'edge' else TTSEngine()
-    trivia = TriviaGenerator(is_ballet=is_ballet, max_words=trivia_size, use_previous_trivia=use_previous_trivia)
+    trivia = TriviaGenerator(is_ballet=is_ballet, max_words=trivia_size, use_previous_trivia=use_previous_trivia, gpt_model=gpt_model)
     spotify = Spotify()
 
-    print(f"🎶 Starting Spotify announcer with is_ballet set to {is_ballet}, trivia size set to {trivia_size} words, play title: {not no_title}, TTS engine: {tts_choice}...")
+    print(f"🎶 Starting Spotify announcer with is_ballet set to {is_ballet}, trivia size set to {trivia_size} words, play title: {not no_title}, TTS engine: {tts_choice}, GPT model: {gpt_model}...")
     
     try:
         while True:
