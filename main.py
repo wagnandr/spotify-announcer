@@ -65,6 +65,7 @@ class TTSEngine:
 class EdgeTTSEngine:
     def __init__(self):
         self.loop = asyncio.get_event_loop()
+        self.volume = 0.5
 
     async def generate_text_to_file(self, text, file_path):
         communicate = edge_tts.Communicate(text=text, voice="en-US-GuyNeural")
@@ -75,7 +76,7 @@ class EdgeTTSEngine:
         with tempfile.NamedTemporaryFile(suffix=".mp3", delete=True) as tmp:
             self.loop.run_until_complete(self.generate_text_to_file(text, tmp.name))
             process = subprocess.Popen(
-                ["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", tmp.name]
+                ["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", "-volume", str(int(self.volume * 100)), tmp.name]
             )
             process.wait()
 
