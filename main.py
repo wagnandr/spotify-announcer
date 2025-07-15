@@ -139,17 +139,24 @@ def main():
         action='store_true',
         help='Do not play any trivia'
     )
+    parser.add_argument(
+        '--tts',
+        choices=['edge', 'pyttsx3'],
+        default='edge',
+        help='Choose TTS engine: "edge" (default) or "pyttsx3"'
+    )
     args = parser.parse_args()
     is_ballet = args.ballet
     trivia_size = args.trivia_size
     no_title = args.no_title
     no_trivia = args.no_trivia
+    tts_choice = args.tts
 
-    engine = EdgeTTSEngine()
+    engine = EdgeTTSEngine() if tts_choice == 'edge' else TTSEngine()
     trivia = TriviaGenerator(is_ballet=is_ballet, max_words=trivia_size)
     spotify = Spotify()
 
-    print(f"🎶 Starting Spotify announcer with is_ballet set to {is_ballet}, trivia size set to {trivia_size} words, play title: {not no_title}...")
+    print(f"🎶 Starting Spotify announcer with is_ballet set to {is_ballet}, trivia size set to {trivia_size} words, play title: {not no_title}, TTS engine: {tts_choice}...")
     
     try:
         while True:
