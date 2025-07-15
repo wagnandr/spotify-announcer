@@ -132,13 +132,19 @@ def main():
     
     try:
         while True:
-            spotify_data = spotify.track_info()
-            if spotify_data.is_new:
-                name = f'{spotify_data.title} by {spotify_data.artist}' 
-                process_speak_name = engine.speak(spotify_data.title)
-                trivia_text = trivia.generate_trivia(name)
-                process_speak_name.wait()
-                engine.speak(trivia_text).wait()
+            from requests.exceptions import ReadTimeout
+            try:
+                spotify_data = spotify.track_info()
+                if spotify_data.is_new:
+                    name = f'{spotify_data.title} by {spotify_data.artist}' 
+                    process_speak_name = engine.speak(spotify_data.title)
+                    trivia_text = trivia.generate_trivia(name)
+                    process_speak_name.wait()
+                    engine.speak(trivia_text).wait()
+            except (ReadTimeout) as e:
+                print("Network error:", e)
+            except Exception as e:
+                print("Unexpected error:", e)
             time.sleep(5)
     except KeyboardInterrupt:
         print("\nExiting Spotify announcer...")
