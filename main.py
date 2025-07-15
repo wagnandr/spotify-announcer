@@ -81,21 +81,21 @@ class EdgeTTSEngine:
 
 
 class TriviaGenerator:
-    def __init__(self, is_ballet=False):
+    def __init__(self, is_ballet=False, max_words=40):
         import openai
         self.client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         self.previous_trivia = []
         self.is_ballet = is_ballet 
+        self.max_words = max_words
 
     def generate_prompt(self, title):
-        prompt_parts = [
-        ]
+        prompt_parts = []
         if self.is_ballet:
-            prompt_parts.append('Give a short description (max. 40 words) about the following song thereby embedding them into the full music piece.')
+            prompt_parts.append(f'Give a short description (max. {self.max_words} words) about the following song thereby embedding them into the full music piece.')
             prompt_parts.append('Where in the story is it happening? What would happen before, e.g., in a ballet?')
             prompt_parts.append('Assume the user has understood the events in the ballet so far.')
         else:
-            prompt_parts.append('Give a short description (max. 40 words) about the following song thereby embedding them into the full music piece.',)
+            prompt_parts.append(f'Give a short description (max. {self.max_words} words) about the following song thereby embedding them into the full music piece.')
         prompt_parts.append(f'The song is: {title}')
         #f'Previous trivia were: {". ".join(self.previous_trivia)}',
         return " ".join(prompt_parts)
@@ -121,14 +121,21 @@ def main():
         action='store_true', 
         help='Set the is_ballet parameter to True'
     )
+    parser.add_argument(
+        '--trivia-size',
+        type=int,
+        default=40,
+        help='Maximum number of words for the trivia (default: 40)'
+    )
     args = parser.parse_args()
     is_ballet = args.ballet
+    trivia_size = args.trivia_size
 
     engine = EdgeTTSEngine()
-    trivia = TriviaGenerator(is_ballet=is_ballet)
+    trivia = TriviaGenerator(is_ballet=is_ballet, max_words=trivia_size)
     spotify = Spotify()
 
-    print(f"🎶 Starting Spotify announcer with is_ballet set to {is_ballet}...")
+    print(f"🎶 Starting Spotify announcer with is_ballet set to {is_ballet}, trivia size set to {trivia_size} words...")
     
     try:
         while True:
