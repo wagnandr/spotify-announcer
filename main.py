@@ -88,11 +88,13 @@ class TriviaGenerator:
 
     def generate_prompt(self, title):
         prompt_parts = [
-            'Give a short description (max. 40 words) about the following song thereby embedding them into the full music piece.',
         ]
         if self.is_ballet:
+            prompt_parts.append('Give a short description (max. 40 words) about the following song thereby embedding them into the full music piece.')
             prompt_parts.append('Where in the story is it happening? What would happen before, e.g., in a ballet?')
             prompt_parts.append('Assume the user has understood the events in the ballet so far.')
+        else:
+            prompt_parts.append('Give a short description (max. 40 words) about the following song thereby embedding them into the full music piece.',)
         prompt_parts.append(f'The song is: {title}')
         #f'Previous trivia were: {". ".join(self.previous_trivia)}',
         return " ".join(prompt_parts)
