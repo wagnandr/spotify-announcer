@@ -134,10 +134,16 @@ def main():
         action='store_true',
         help='Do not play the title before the trivia'
     )
+    parser.add_argument(
+        '--no-trivia',
+        action='store_true',
+        help='Do not play any trivia'
+    )
     args = parser.parse_args()
     is_ballet = args.ballet
     trivia_size = args.trivia_size
     no_title = args.no_title
+    no_trivia = args.no_trivia
 
     engine = EdgeTTSEngine()
     trivia = TriviaGenerator(is_ballet=is_ballet, max_words=trivia_size)
@@ -154,10 +160,12 @@ def main():
                     name = f'{spotify_data.title} by {spotify_data.artist}' 
                     if not no_title:
                         process_speak_name = engine.speak(spotify_data.title)
-                    trivia_text = trivia.generate_trivia(name)
+                    if not no_trivia:
+                        trivia_text = trivia.generate_trivia(name)
                     if not no_title:
                         process_speak_name.wait()
-                    engine.speak(trivia_text).wait()
+                    if not no_trivia:
+                        engine.speak(trivia_text).wait()
             except (ReadTimeout) as e:
                 print("Network error:", e)
             except Exception as e:
