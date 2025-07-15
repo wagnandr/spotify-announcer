@@ -77,7 +77,6 @@ class EdgeTTSEngine:
             process = subprocess.Popen(
                 ["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", tmp.name]
             )
-            # For compatibility with .wait() in main loop, return the process
             process.wait()
 
 
