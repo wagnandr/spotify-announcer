@@ -15,17 +15,19 @@ A CLI tool that announces the currently playing Spotify track and provides trivi
 - Python 3.8+
 - [Spotify Developer credentials](https://developer.spotify.com/)
 - OpenAI API key
-- `ffplay` (for Edge TTS)
-- Python packages: `spotipy`, `openai`, `python-dotenv`, `edge-tts`, `pyttsx3`, `requests`
+- Python packages: `spotipy`, `openai`, `python-dotenv`, `edge-tts`, `pyttsx3`, `requests`, `pydub`, `simpleaudio`
+
+## Installation
+
+The recommended way is to install with [pipx](https://pypa.github.io/pipx/):
+
+```bash
+pipx install .
+```
 
 ## Setup
 
-1. Install dependencies:
-    ```bash
-    pip install spotipy openai python-dotenv edge-tts pyttsx3 requests
-    ```
-
-2. Create a `.env` file with your credentials:
+1. Create a `.env` file with your credentials:
     ```
     SPOTIPY_CLIENT_ID=your_spotify_client_id
     SPOTIPY_CLIENT_SECRET=your_spotify_client_secret
@@ -33,15 +35,10 @@ A CLI tool that announces the currently playing Spotify track and provides trivi
     OPENAI_API_KEY=your_openai_api_key
     ```
 
-3. Make sure `ffplay` is installed (for Edge TTS):
-    ```bash
-    sudo apt install ffmpeg
-    ```
-
 ## Usage
 
 ```bash
-python main.py [options]
+spotify-announcer [options]
 ```
 
 ### Options
@@ -64,10 +61,18 @@ python main.py [options]
 - `--tts edge|pyttsx3`  
   Choose TTS engine: `edge` (default) or `pyttsx3`.
 
+- `--gpt-model gpt-4.1|gpt-3.5-turbo`  
+  Choose OpenAI GPT model.
+
+- `--volume FLOAT`  
+  Set the TTS volume (0.0 to 1.0, default: 0.5).
+
 ## Example
 
 ```bash
-python main.py --ballet --trivia-size 30 --tts pyttsx3
+spotify-announcer --ballet --trivia-size 30 --tts pyttsx3
 ```
 
 ## License
+
+MIT

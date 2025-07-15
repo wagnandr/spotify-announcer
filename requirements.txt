@@ -1,0 +1,8 @@
+python-dotenv
+spotipy
+openai
+edge-tts
+pyttsx3
+requests
+pydub
+simpleaudio

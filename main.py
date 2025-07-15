@@ -56,7 +56,7 @@ class TTSEngine:
         import pyttsx3
         self.engine = pyttsx3.init()
 
-    def speak(self, text):
+    async def speak(self, text):
         print(f"🔊 {text}")
         self.engine.say(text)
         self.engine.runAndWait()
@@ -64,17 +64,16 @@ class TTSEngine:
 
 class EdgeTTSEngine:
     def __init__(self, volume=0.5):
-        self.loop = asyncio.get_event_loop()
         self.volume = volume
 
     async def generate_text_to_file(self, text, file_path):
         communicate = edge_tts.Communicate(text=text, voice="en-US-GuyNeural")
         await communicate.save(file_path)
 
-    def speak(self, text):
+    async def speak(self, text):
         print(f"🔊 {text}")
         with tempfile.NamedTemporaryFile(suffix=".mp3", delete=True) as tmp:
-            self.loop.run_until_complete(self.generate_text_to_file(text, tmp.name))
+            await self.generate_text_to_file(text, tmp.name)
             process = subprocess.Popen(
                 ["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", "-volume", str(int(self.volume * 100)), tmp.name]
             )
@@ -190,14 +189,12 @@ def main():
                 if spotify_data.is_new:
                     name = f'{spotify_data.title} by {spotify_data.artist}' 
                     if not no_title:
-                        engine.speak(spotify_data.title)
+                        await engine.speak(spotify_data.title)
                     if not no_trivia:
                         trivia_text = trivia.generate_trivia(name)
-                        engine.speak(trivia_text)
+                        await engine.speak(trivia_text)
             except (ReadTimeout) as e:
                 print("Network error:", e)
-            except Exception as e:
-                print("Unexpected error:", e)
             await asyncio.sleep(5)
 
     try:
